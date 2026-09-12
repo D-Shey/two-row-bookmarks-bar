@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title data-i18n="optTitle">Double Bookmarks Bar — settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <main>
+    <header>
+      <img src="../icons/icon48.png" alt="" width="28" height="28">
+      <h1 data-i18n="optTitle">Double Bookmarks Bar — settings</h1>
+    </header>
+
+    <p class="note" data-i18n="optNote"></p>
+
+    <section>
+      <h2 data-i18n="optSecGeneral">General</h2>
+
+      <div class="field switch">
+        <label for="enabled" data-i18n="optEnabled">Show the bar</label>
+        <input type="checkbox" id="enabled">
+      </div>
+
+      <div class="field">
+        <label for="rows" data-i18n="optRows">Number of rows</label>
+        <input type="range" id="rows" min="1" max="4" step="1">
+        <output for="rows" id="rowsOut"></output>
+      </div>
+
+      <div class="field">
+        <label for="layout" data-i18n="optLayout">How the bar sits on the page</label>
+        <select id="layout">
+          <option value="push" data-i18n="optLayoutPush"></option>
+          <option value="overlay" data-i18n="optLayoutOverlay"></option>
+        </select>
+      </div>
+
+      <div class="field switch">
+        <label for="autoHide" data-i18n="optAutoHide">Reveal on hover only</label>
+        <input type="checkbox" id="autoHide">
+      </div>
+
+      <div class="field switch">
+        <label for="wheelScroll" data-i18n="optWheelScroll">Scroll the bar with the wheel</label>
+        <input type="checkbox" id="wheelScroll">
+      </div>
+      <p class="hint" data-i18n="optWheelScrollHint"></p>
+
+      <div class="field switch">
+        <label for="hideOnFullscreen" data-i18n="optHideFullscreen">Hide in fullscreen</label>
+        <input type="checkbox" id="hideOnFullscreen">
+      </div>
+
+      <div class="field switch">
+        <label for="newTabDark" data-i18n="optNewTabDark">Dark new tab page</label>
+        <input type="checkbox" id="newTabDark">
+      </div>
+      <p class="hint" data-i18n="optNewTabDarkHint"></p>
+    </section>
+
+    <section>
+      <h2 data-i18n="optSecLook">Appearance</h2>
+
+      <div class="field">
+        <label for="theme" data-i18n="optTheme">Theme</label>
+        <select id="theme">
+          <option value="auto" data-i18n="optThemeAuto"></option>
+          <option value="light" data-i18n="optThemeLight"></option>
+          <option value="dark" data-i18n="optThemeDark"></option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="labels" data-i18n="optShowLabels">Titles</label>
+        <select id="labels">
+          <option value="always" data-i18n="optLabelsAlways"></option>
+          <option value="folders" data-i18n="optLabelsFolders"></option>
+          <option value="never" data-i18n="optLabelsNever"></option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="rowHeight" data-i18n="optRowHeight">Row height</label>
+        <input type="range" id="rowHeight" min="22" max="40" step="1">
+        <output for="rowHeight" id="rowHeightOut"></output>
+      </div>
+
+      <div class="field">
+        <label for="fontSize" data-i18n="optFontSize">Font size</label>
+        <input type="range" id="fontSize" min="10" max="16" step="1">
+        <output for="fontSize" id="fontSizeOut"></output>
+      </div>
+
+      <div class="field">
+        <label for="maxItemWidth" data-i18n="optMaxItemWidth">Maximum item width</label>
+        <input type="range" id="maxItemWidth" min="80" max="400" step="10">
+        <output for="maxItemWidth" id="maxItemWidthOut"></output>
+      </div>
+
+      <div class="field switch">
+        <label for="showOther" data-i18n="optShowOther">Show “Other bookmarks”</label>
+        <input type="checkbox" id="showOther">
+      </div>
+    </section>
+
+    <section>
+      <h2 data-i18n="optSecSites">Sites</h2>
+      <div class="field column">
+        <label for="blocklist" data-i18n="optBlocklist">Never show the bar on these sites</label>
+        <textarea id="blocklist" rows="5" spellcheck="false" placeholder="example.com"></textarea>
+      </div>
+    </section>
+
+    <footer>
+      <button type="button" id="reset" data-i18n="optReset">Restore defaults</button>
+      <span id="saved" hidden data-i18n="optSaved">Saved</span>
+    </footer>
+  </main>
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>

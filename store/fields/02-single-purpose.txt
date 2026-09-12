@@ -1,0 +1,1 @@
+Show the browser's bookmarks bar in more than one row, keeping the look and behaviour of the built-in bar.

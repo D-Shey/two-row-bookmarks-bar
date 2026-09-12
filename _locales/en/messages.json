@@ -1,0 +1,230 @@
+{
+  "extName": {
+    "message": "Double Bookmarks Bar"
+  },
+  "extDesc": {
+    "message": "A pixel-faithful replica of Chrome's bookmarks bar rendered in two rows, with the same behaviour."
+  },
+  "cmdToggle": {
+    "message": "Show / hide the bookmarks bar"
+  },
+  "managedBookmarks": {
+    "message": "Managed bookmarks"
+  },
+  "emptyFolder": {
+    "message": "(empty)"
+  },
+  "overflowTitle": {
+    "message": "More bookmarks"
+  },
+  "openNewTab": {
+    "message": "Open in new tab"
+  },
+  "openNewWindow": {
+    "message": "Open in new window"
+  },
+  "openIncognito": {
+    "message": "Open in Incognito window"
+  },
+  "openAll": {
+    "message": "Open all"
+  },
+  "openAllNewWindow": {
+    "message": "Open all in new window"
+  },
+  "openAllIncognito": {
+    "message": "Open all in Incognito window"
+  },
+  "edit": {
+    "message": "Edit…"
+  },
+  "rename": {
+    "message": "Rename…"
+  },
+  "cut": {
+    "message": "Cut"
+  },
+  "copy": {
+    "message": "Copy"
+  },
+  "paste": {
+    "message": "Paste"
+  },
+  "delete": {
+    "message": "Delete"
+  },
+  "addPage": {
+    "message": "Add page…"
+  },
+  "addFolder": {
+    "message": "Add folder…"
+  },
+  "bookmarkManager": {
+    "message": "Bookmark manager"
+  },
+  "showBookmarksBar": {
+    "message": "Show bookmarks bar"
+  },
+  "extensionOptions": {
+    "message": "Bookmarks bar settings…"
+  },
+  "dlgEditBookmark": {
+    "message": "Edit bookmark"
+  },
+  "dlgEditFolder": {
+    "message": "Edit folder name"
+  },
+  "dlgNewBookmark": {
+    "message": "Add page"
+  },
+  "dlgNewFolder": {
+    "message": "New folder"
+  },
+  "fieldName": {
+    "message": "Name"
+  },
+  "fieldUrl": {
+    "message": "URL"
+  },
+  "btnSave": {
+    "message": "Save"
+  },
+  "btnCancel": {
+    "message": "Cancel"
+  },
+  "newFolderName": {
+    "message": "New folder"
+  },
+  "incognitoBlocked": {
+    "message": "Allow this extension in Incognito on the extensions page to use this."
+  },
+  "popTitle": {
+    "message": "Double Bookmarks Bar"
+  },
+  "popEnabled": {
+    "message": "Bar enabled"
+  },
+  "popAddCurrent": {
+    "message": "Bookmark this page"
+  },
+  "popManager": {
+    "message": "Bookmark manager"
+  },
+  "popOptions": {
+    "message": "Settings"
+  },
+  "popHiddenHere": {
+    "message": "Hidden on this site"
+  },
+  "optTitle": {
+    "message": "Double Bookmarks Bar — settings"
+  },
+  "optSecGeneral": {
+    "message": "General"
+  },
+  "optSecLook": {
+    "message": "Appearance"
+  },
+  "optSecSites": {
+    "message": "Sites"
+  },
+  "optEnabled": {
+    "message": "Show the bar"
+  },
+  "optRows": {
+    "message": "Number of rows"
+  },
+  "optLayout": {
+    "message": "How the bar sits on the page"
+  },
+  "optLayoutPush": {
+    "message": "Push page content down (like the real bar)"
+  },
+  "optLayoutOverlay": {
+    "message": "Float above the page"
+  },
+  "optAutoHide": {
+    "message": "Reveal only when the pointer touches the top edge"
+  },
+  "optTheme": {
+    "message": "Theme"
+  },
+  "optThemeAuto": {
+    "message": "Match the page / system"
+  },
+  "optThemeLight": {
+    "message": "Light"
+  },
+  "optThemeDark": {
+    "message": "Dark"
+  },
+  "optFontSize": {
+    "message": "Font size"
+  },
+  "optRowHeight": {
+    "message": "Row height"
+  },
+  "optMaxItemWidth": {
+    "message": "Maximum item width"
+  },
+  "optShowLabels": {
+    "message": "Titles"
+  },
+  "optLabelsAlways": {
+    "message": "Always show"
+  },
+  "optLabelsFolders": {
+    "message": "Folders only (icons for pages)"
+  },
+  "optLabelsNever": {
+    "message": "Never (icons only)"
+  },
+  "optShowOther": {
+    "message": "Show the “Other bookmarks” button"
+  },
+  "optHideFullscreen": {
+    "message": "Hide while a page is fullscreen"
+  },
+  "optBlocklist": {
+    "message": "Never show the bar on these sites (one host per line)"
+  },
+  "optReset": {
+    "message": "Restore defaults"
+  },
+  "optSaved": {
+    "message": "Saved"
+  },
+  "optNote": {
+    "message": "Chrome does not let extensions change the browser's own bookmarks bar, so this one is drawn inside the page. Hide the built-in bar with Ctrl+Shift+B for the intended result. The bar cannot appear on browser pages such as chrome://, the Web Store, or other extensions' pages."
+  },
+  "emptyBarHint": {
+    "message": "For quick access, place your bookmarks here on the bookmarks bar."
+  },
+  "bookmarkletUnsupported": {
+    "message": "Chrome does not allow extensions to run bookmarklets (javascript: bookmarks)."
+  },
+  "deleted": {
+    "message": "Deleted"
+  },
+  "undo": {
+    "message": "Undo"
+  },
+  "allBookmarks": {
+    "message": "All bookmarks"
+  },
+  "newTabTitle": {
+    "message": "New Tab"
+  },
+  "optNewTabDark": {
+    "message": "Dark new tab page"
+  },
+  "optNewTabDarkHint": {
+    "message": "Keeps the new tab page — backdrop and bar — dark whatever the theme is set to. Turn it off and the page follows the theme like every other page."
+  },
+  "optWheelScroll": {
+    "message": "Scroll the bar with the wheel"
+  },
+  "optWheelScrollHint": {
+    "message": "Point at the bar and turn the wheel to pull the hidden rows of bookmarks into view, one row per notch. The page scrolls as usual once the bar reaches either end, or when nothing is hidden."
+  }
+}

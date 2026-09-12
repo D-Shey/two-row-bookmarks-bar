@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Double Bookmarks Bar</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="../icons/icon32.png" alt="" width="20" height="20">
+    <h1 data-i18n="popTitle">Double Bookmarks Bar</h1>
+  </header>
+
+  <label class="toggle">
+    <input type="checkbox" id="enabled">
+    <span data-i18n="popEnabled">Bar enabled</span>
+  </label>
+
+  <div class="rows-row">
+    <span data-i18n="optRows">Rows</span>
+    <div class="segmented" id="rows">
+      <button type="button" data-value="1">1</button>
+      <button type="button" data-value="2">2</button>
+      <button type="button" data-value="3">3</button>
+      <button type="button" data-value="4">4</button>
+    </div>
+  </div>
+
+  <hr>
+
+  <button class="cmd" id="add" data-i18n="popAddCurrent">Bookmark this page</button>
+  <button class="cmd" id="hideHere"><span data-i18n="popHiddenHere">Hidden on this site</span></button>
+  <button class="cmd" id="manager" data-i18n="popManager">Bookmark manager</button>
+  <button class="cmd" id="options" data-i18n="popOptions">Settings</button>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

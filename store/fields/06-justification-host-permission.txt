@@ -1,0 +1,1 @@
+The bookmarks bar has to be visible on every page the user opens, exactly like the built-in one. The extension does not read or modify page content: it appends one element of its own inside a closed shadow root and offsets the page by the height of the bar. No page data is collected, stored or transmitted.

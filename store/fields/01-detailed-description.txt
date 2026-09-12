@@ -1,0 +1,36 @@
+If you keep more bookmarks than fit across one row, half of them end up hidden behind the » button. This extension shows your bookmarks bar in two rows — or three, or four, whichever you prefer.
+
+It is built to be indistinguishable from the bar Chrome already gives you. Colours, row height, font size, icon size and corner radius were matched against the real bar by measuring pixels, in both the light and the dark theme.
+
+WHAT YOU GET
+
+• Two to four rows, with anything that still does not fit collected under the » button
+• Scroll the bar with the mouse wheel — point at it and the hidden rows come into view, one row per notch
+• Folders with drop-down menus and nested submenus
+• Real site icons, taken from the browser's own cache — nothing is fetched from the network
+• The full context menu: open in a new tab, new window or Incognito, edit, rename, cut, copy, paste, delete, add page, add folder, bookmark manager
+• Drag and drop, both along the bar and inside the menus, including dropping a bookmark into a folder
+• Undo after a delete — a whole folder comes back with everything inside it
+• An "All bookmarks" button on the right, matching current Chrome
+• Bookmarks with no title show as a single icon, exactly as the built-in bar does
+• Light and dark themes; row height, font size, titles and maximum width are adjustable
+• A list of sites where the bar never appears
+• English and Russian interface, following your browser's language
+
+THE NEW TAB PAGE
+
+Extensions are not allowed to run on chrome://newtab, so the only way to show the bar there is to replace that page. This extension does, with a deliberately empty page: a dark backdrop and the bookmarks bar, nothing else. No search box, no sponsored tiles, and your default search engine is never touched. If you would rather keep Chrome's own new tab, the page can be left dark or theme-following in the settings — and disabling the extension restores it entirely.
+
+BEFORE YOU START
+
+Hide Chrome's built-in bookmarks bar with Ctrl+Shift+B, otherwise you will have two bars at once.
+
+HONEST LIMITATIONS
+
+• The bar cannot appear on Chrome's own pages — settings, history, the Web Store, other extensions' pages. Extensions are not permitted to run there.
+• Bookmarklets (javascript: bookmarks) do not work. Manifest V3 forbids extensions from executing arbitrary code on a page.
+• In "push page content down" mode, a site with its own sticky header pinned to the top of the window will draw it underneath the bar. Switch that site to "float above the page", or add it to the exception list.
+
+PRIVACY
+
+The extension collects nothing, stores nothing remotely and makes no network requests at all. It reads and changes your bookmarks only when you ask it to, through Chrome's own bookmarks API. Settings live in Chrome's sync storage, which means your own Google account and nowhere else. There is no analytics, no advertising and no third-party code.

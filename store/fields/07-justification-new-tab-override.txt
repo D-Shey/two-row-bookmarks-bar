@@ -1,0 +1,1 @@
+Extensions cannot run on chrome://newtab, so replacing that page is the only way to show the bookmarks bar there. The replacement page is intentionally empty — a backdrop and the bookmarks bar. It contains no search box, no advertising, and does not alter the user's default search engine.

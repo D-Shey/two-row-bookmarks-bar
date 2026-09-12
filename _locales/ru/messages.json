@@ -1,0 +1,230 @@
+{
+  "extName": {
+    "message": "Панель закладок в две строки"
+  },
+  "extDesc": {
+    "message": "Точная копия панели закладок Chrome, но в две строки, с тем же поведением."
+  },
+  "cmdToggle": {
+    "message": "Показать / скрыть панель закладок"
+  },
+  "managedBookmarks": {
+    "message": "Управляемые закладки"
+  },
+  "emptyFolder": {
+    "message": "(пусто)"
+  },
+  "overflowTitle": {
+    "message": "Ещё закладки"
+  },
+  "openNewTab": {
+    "message": "Открыть в новой вкладке"
+  },
+  "openNewWindow": {
+    "message": "Открыть в новом окне"
+  },
+  "openIncognito": {
+    "message": "Открыть в окне в режиме инкогнито"
+  },
+  "openAll": {
+    "message": "Открыть все"
+  },
+  "openAllNewWindow": {
+    "message": "Открыть все в новом окне"
+  },
+  "openAllIncognito": {
+    "message": "Открыть все в режиме инкогнито"
+  },
+  "edit": {
+    "message": "Изменить…"
+  },
+  "rename": {
+    "message": "Переименовать…"
+  },
+  "cut": {
+    "message": "Вырезать"
+  },
+  "copy": {
+    "message": "Копировать"
+  },
+  "paste": {
+    "message": "Вставить"
+  },
+  "delete": {
+    "message": "Удалить"
+  },
+  "addPage": {
+    "message": "Добавить страницу…"
+  },
+  "addFolder": {
+    "message": "Добавить папку…"
+  },
+  "bookmarkManager": {
+    "message": "Диспетчер закладок"
+  },
+  "showBookmarksBar": {
+    "message": "Показывать панель закладок"
+  },
+  "extensionOptions": {
+    "message": "Настройки панели закладок…"
+  },
+  "dlgEditBookmark": {
+    "message": "Изменить закладку"
+  },
+  "dlgEditFolder": {
+    "message": "Изменить название папки"
+  },
+  "dlgNewBookmark": {
+    "message": "Добавить страницу"
+  },
+  "dlgNewFolder": {
+    "message": "Новая папка"
+  },
+  "fieldName": {
+    "message": "Название"
+  },
+  "fieldUrl": {
+    "message": "URL"
+  },
+  "btnSave": {
+    "message": "Сохранить"
+  },
+  "btnCancel": {
+    "message": "Отмена"
+  },
+  "newFolderName": {
+    "message": "Новая папка"
+  },
+  "incognitoBlocked": {
+    "message": "Разрешите расширению работать в режиме инкогнито на странице расширений."
+  },
+  "popTitle": {
+    "message": "Панель закладок в две строки"
+  },
+  "popEnabled": {
+    "message": "Панель включена"
+  },
+  "popAddCurrent": {
+    "message": "Добавить эту страницу в закладки"
+  },
+  "popManager": {
+    "message": "Диспетчер закладок"
+  },
+  "popOptions": {
+    "message": "Настройки"
+  },
+  "popHiddenHere": {
+    "message": "Скрыта на этом сайте"
+  },
+  "optTitle": {
+    "message": "Панель закладок в две строки — настройки"
+  },
+  "optSecGeneral": {
+    "message": "Основное"
+  },
+  "optSecLook": {
+    "message": "Внешний вид"
+  },
+  "optSecSites": {
+    "message": "Сайты"
+  },
+  "optEnabled": {
+    "message": "Показывать панель"
+  },
+  "optRows": {
+    "message": "Количество строк"
+  },
+  "optLayout": {
+    "message": "Как панель располагается на странице"
+  },
+  "optLayoutPush": {
+    "message": "Сдвигать содержимое страницы вниз (как настоящая панель)"
+  },
+  "optLayoutOverlay": {
+    "message": "Поверх страницы"
+  },
+  "optAutoHide": {
+    "message": "Показывать только при наведении на верхний край"
+  },
+  "optTheme": {
+    "message": "Тема"
+  },
+  "optThemeAuto": {
+    "message": "Как у страницы / системы"
+  },
+  "optThemeLight": {
+    "message": "Светлая"
+  },
+  "optThemeDark": {
+    "message": "Тёмная"
+  },
+  "optFontSize": {
+    "message": "Размер шрифта"
+  },
+  "optRowHeight": {
+    "message": "Высота строки"
+  },
+  "optMaxItemWidth": {
+    "message": "Максимальная ширина элемента"
+  },
+  "optShowLabels": {
+    "message": "Подписи"
+  },
+  "optLabelsAlways": {
+    "message": "Всегда показывать"
+  },
+  "optLabelsFolders": {
+    "message": "Только у папок (страницы — значками)"
+  },
+  "optLabelsNever": {
+    "message": "Никогда (только значки)"
+  },
+  "optShowOther": {
+    "message": "Показывать кнопку «Другие закладки»"
+  },
+  "optHideFullscreen": {
+    "message": "Скрывать в полноэкранном режиме страницы"
+  },
+  "optBlocklist": {
+    "message": "Не показывать панель на этих сайтах (по одному хосту в строке)"
+  },
+  "optReset": {
+    "message": "Сбросить настройки"
+  },
+  "optSaved": {
+    "message": "Сохранено"
+  },
+  "optNote": {
+    "message": "Chrome не позволяет расширениям менять собственную панель закладок браузера, поэтому эта панель рисуется внутри страницы. Скройте встроенную панель сочетанием Ctrl+Shift+B, чтобы получить задуманный результат. На служебных страницах (chrome://, Интернет-магазин Chrome, страницы других расширений) панель показать нельзя."
+  },
+  "emptyBarHint": {
+    "message": "Чтобы получить быстрый доступ, разместите здесь свои закладки."
+  },
+  "bookmarkletUnsupported": {
+    "message": "Chrome не позволяет расширениям выполнять букмарклеты (закладки javascript:)."
+  },
+  "deleted": {
+    "message": "Удалено"
+  },
+  "undo": {
+    "message": "Отменить"
+  },
+  "allBookmarks": {
+    "message": "Все закладки"
+  },
+  "newTabTitle": {
+    "message": "Новая вкладка"
+  },
+  "optNewTabDark": {
+    "message": "Тёмная страница новой вкладки"
+  },
+  "optNewTabDarkHint": {
+    "message": "Держит новую вкладку — и фон, и панель — тёмной независимо от выбранной темы. Если выключить, страница следует теме, как и все остальные."
+  },
+  "optWheelScroll": {
+    "message": "Прокручивать панель колесом"
+  },
+  "optWheelScrollHint": {
+    "message": "Наведите курсор на панель и крутите колесо — скрытые ряды закладок подтягиваются по одному ряду за щелчок. Когда панель дошла до края или скрывать нечего, прокручивается страница, как обычно."
+  }
+}

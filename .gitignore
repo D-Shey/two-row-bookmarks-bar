@@ -1,0 +1,18 @@
+# build output
+dist/
+
+# vendored Claude Code skills and local agent config — restorable from
+# skills-lock.json, so the lockfile is tracked and the contents are not
+.agents/
+.claude/
+
+# screenshots taken on a real profile - kept locally, never published
+docs/
+
+# Playwright MCP artefacts
+.playwright-mcp/
+signin.png
+listing-state.png
+
+# flattened copies used only for the store upload form
+store/upload/

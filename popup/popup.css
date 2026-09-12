@@ -1,0 +1,91 @@
+:root {
+  color-scheme: light dark;
+  --fg: #1f1f1f;
+  --fg-dim: #5f6368;
+  --bg: #ffffff;
+  --hover: rgba(31, 31, 31, 0.08);
+  --border: rgba(0, 0, 0, 0.12);
+  --accent: #0b57d0;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fg: #e8eaed;
+    --fg-dim: #9aa0a6;
+    --bg: #292a2d;
+    --hover: rgba(255, 255, 255, 0.10);
+    --border: rgba(255, 255, 255, 0.14);
+    --accent: #a8c7fa;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  width: 268px;
+  margin: 0;
+  padding: 10px;
+  background: var(--bg);
+  color: var(--fg);
+  font: 13px/1.35 system-ui, "Segoe UI", Roboto, sans-serif;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 4px 10px;
+}
+
+h1 { margin: 0; font-size: 13px; font-weight: 500; }
+
+hr { border: 0; border-top: 1px solid var(--border); margin: 8px 0; }
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: default;
+}
+.toggle:hover { background: var(--hover); }
+.toggle input { accent-color: var(--accent); width: 15px; height: 15px; }
+
+.rows-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 8px;
+}
+
+.segmented { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.segmented button {
+  width: 30px;
+  height: 26px;
+  border: 0;
+  border-inline-start: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: default;
+}
+.segmented button:first-child { border-inline-start: 0; }
+.segmented button:hover { background: var(--hover); }
+.segmented button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
+
+.cmd {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: default;
+}
+.cmd:hover { background: var(--hover); }
+.cmd[aria-pressed="true"]::after { content: " ✓"; color: var(--accent); }

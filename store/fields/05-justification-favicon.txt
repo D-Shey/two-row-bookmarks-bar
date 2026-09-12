@@ -1,0 +1,1 @@
+Draws each bookmark's site icon next to it, the way the built-in bookmarks bar does. Icons come from the browser's local favicon cache; no network request is made.

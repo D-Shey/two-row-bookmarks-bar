@@ -1,0 +1,343 @@
+/* Everything here lives inside a closed shadow root, so the page can neither
+   read nor restyle it. Dimensions mirror Chrome's own bookmarks bar. */
+
+:host, :host * { box-sizing: border-box; }
+
+* {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- palette ---------------------------------------------------- */
+
+:host {
+  --dbb-bg:            #ffffff;
+  --dbb-fg:            #1f1f1f;
+  --dbb-fg-dim:        #5f6368;
+  --dbb-hover:         rgba(31, 31, 31, 0.08);
+  --dbb-active:        rgba(31, 31, 31, 0.14);
+  --dbb-border:        rgba(0, 0, 0, 0.12);
+  --dbb-sep:           rgba(0, 0, 0, 0.16);
+  --dbb-focus:         #0b57d0;
+  --dbb-on-focus:      #ffffff;
+  --dbb-drop:          #0b57d0;
+  --dbb-menu-bg:       #ffffff;
+  --dbb-menu-shadow:   0 1px 3px rgba(0, 0, 0, 0.22), 0 4px 16px rgba(0, 0, 0, 0.16);
+  --dbb-scrim:         rgba(0, 0, 0, 0.32);
+  --dbb-field-border:  rgba(0, 0, 0, 0.28);
+
+  --dbb-row-h:         28px;
+  --dbb-font:          12px;
+  --dbb-item-max:      220px;
+  --dbb-pad-v:         2px;
+  --dbb-pad-h:         6px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host(:not([data-theme="light"])) {
+    /* sampled straight off Chrome's own dark bookmarks bar and menus */
+    --dbb-bg:           #2e2e2e;
+    --dbb-fg:           #e3e3e3;
+    --dbb-fg-dim:       #c4c7c5;
+    --dbb-hover:        rgba(255, 255, 255, 0.10);
+    --dbb-active:       rgba(255, 255, 255, 0.16);
+    --dbb-border:       #474747;
+    --dbb-sep:          #5e5e5e;
+    --dbb-focus:        #a8c7fa;
+    --dbb-on-focus:     #062e6f;
+    --dbb-drop:         #a8c7fa;
+    --dbb-menu-bg:      #1f1f1f;
+    --dbb-menu-shadow:  0 1px 3px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.4);
+    --dbb-field-border: rgba(255, 255, 255, 0.3);
+  }
+}
+
+:host([data-theme="dark"]) {
+  /* sampled straight off Chrome's own dark bookmarks bar and menus */
+  --dbb-bg:           #2e2e2e;
+  --dbb-fg:           #e3e3e3;
+  --dbb-fg-dim:       #c4c7c5;
+  --dbb-hover:        rgba(255, 255, 255, 0.10);
+  --dbb-active:       rgba(255, 255, 255, 0.16);
+  --dbb-border:       #474747;
+  --dbb-sep:          #5e5e5e;
+  --dbb-focus:        #a8c7fa;
+  --dbb-on-focus:     #062e6f;
+  --dbb-drop:         #a8c7fa;
+  --dbb-menu-bg:      #1f1f1f;
+  --dbb-menu-shadow:  0 1px 3px rgba(0, 0, 0, 0.5), 0 4px 16px rgba(0, 0, 0, 0.4);
+  --dbb-field-border: rgba(255, 255, 255, 0.3);
+}
+
+/* ---------- the bar ---------------------------------------------------- */
+
+#bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  height: 100%;
+  padding: var(--dbb-pad-v) 4px var(--dbb-pad-v) var(--dbb-pad-h);
+  background: var(--dbb-bg);
+  color: var(--dbb-fg);
+  border-bottom: 1px solid var(--dbb-border);
+  transition: transform 120ms ease;
+  will-change: transform;
+}
+
+:host(.autohide) #bar { transform: translateY(-101%); }
+:host(.autohide.revealed) #bar,
+:host(.autohide.menu-open) #bar { transform: none; }
+
+#rows {
+  position: relative;          /* offsetTop of the items is measured against this */
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  /* no overscroll-behavior here on purpose: once the bar reaches either end the
+     wheel has to carry on to the page, the way it does over any other element */
+}
+
+/* with wheel scrolling on, the extra rows stay in the flow and the box scrolls */
+#rows.scrollable { overflow-y: auto; }
+#rows::-webkit-scrollbar { width: 0; height: 0; }
+
+#right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  height: var(--dbb-row-h);
+  gap: 2px;
+}
+
+.sep {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--dbb-sep);
+}
+.sep[hidden] { display: none; }
+
+/* ---------- a single bar entry ----------------------------------------- */
+
+.item {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--dbb-row-h);
+  max-width: var(--dbb-item-max);
+  padding: 0 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font-size: var(--dbb-font);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: default;
+  user-select: none;
+}
+
+.item:hover,
+.item.open { background: var(--dbb-hover); }
+.item:active { background: var(--dbb-active); }
+.item:focus-visible { outline: 2px solid var(--dbb-focus); outline-offset: -2px; }
+
+.item .icon {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 2px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.item .label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.item.icon-only { padding: 0 6px; }
+.item.icon-only .label { display: none; }
+.item.no-icon .icon { display: none; }
+
+/* measured, but past the last visible row */
+.item.overflowed { display: none; }
+
+#chevron { padding: 0 4px; }
+#chevron[hidden] { display: none; }
+
+/* ---------- drag and drop ---------------------------------------------- */
+
+.item.dragging { opacity: 0.4; }
+.item.drop-into { background: var(--dbb-active); box-shadow: inset 0 0 0 2px var(--dbb-drop); }
+
+#drop-line {
+  position: fixed;
+  z-index: 6;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--dbb-drop);
+  pointer-events: none;
+}
+#drop-line[hidden] { display: none; }
+
+/* ---------- floating layer: menus, context menus, dialogs -------------- */
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+}
+#overlay[hidden] { display: none; }
+
+#layer {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.menu {
+  position: fixed;
+  outline: none;
+  min-width: 168px;
+  max-width: 360px;
+  padding: 6px 0;
+  border-radius: 8px;
+  background: var(--dbb-menu-bg);
+  color: var(--dbb-fg);
+  box-shadow: var(--dbb-menu-shadow);
+  pointer-events: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: calc(100vh - 16px);
+  scrollbar-width: thin;
+}
+
+.menu .mi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 28px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: var(--dbb-font);
+  line-height: 1;
+  white-space: nowrap;
+  text-align: start;
+  cursor: default;
+}
+
+.menu .mi:hover,
+.menu .mi.active { background: var(--dbb-hover); }
+.menu .mi[disabled] { opacity: 0.4; }
+.menu .mi:focus-visible { outline: 2px solid var(--dbb-focus); outline-offset: -2px; }
+.menu .mi .icon { flex: 0 0 auto; width: 16px; height: 16px; object-fit: contain; border-radius: 2px; }
+.menu .mi .label { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.menu .mi .arrow { flex: 0 0 auto; width: 12px; height: 12px; opacity: 0.7; }
+.menu .mi .tick { flex: 0 0 auto; width: 16px; height: 16px; }
+.menu .mi.empty { opacity: 0.55; font-style: italic; }
+.menu.plain .mi .icon { display: none; }
+
+.menu .msep {
+  height: 1px;
+  margin: 5px 0;
+  background: var(--dbb-sep);
+}
+
+/* ---------- dialog ----------------------------------------------------- */
+
+#scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  background: var(--dbb-scrim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+#scrim[hidden] { display: none; }
+
+.dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 20px;
+  border-radius: 12px;
+  background: var(--dbb-menu-bg);
+  color: var(--dbb-fg);
+  box-shadow: var(--dbb-menu-shadow);
+  font-size: 13px;
+}
+
+.dialog h2 { font-size: 15px; font-weight: 500; margin-bottom: 14px; }
+.dialog .row { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.dialog label { font-size: 11px; color: var(--dbb-fg-dim); }
+
+.dialog input[type="text"] {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--dbb-field-border);
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font-size: 13px;
+}
+.dialog input[type="text"]:focus {
+  outline: 2px solid var(--dbb-focus);
+  outline-offset: -1px;
+  border-color: transparent;
+}
+
+.dialog .msg { margin-bottom: 16px; line-height: 1.45; }
+.dialog .buttons { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
+.dialog button {
+  height: 32px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: default;
+  background: transparent;
+  color: var(--dbb-focus);
+}
+.dialog button.primary { background: var(--dbb-focus); color: var(--dbb-on-focus); }
+.dialog button:hover { background: var(--dbb-hover); }
+.dialog button.primary:hover { background: var(--dbb-focus); filter: brightness(1.08); }
+.dialog button:focus-visible { outline: 2px solid var(--dbb-focus); outline-offset: 2px; }
+
+/* ---------- toast ------------------------------------------------------ */
+
+#toast {
+  position: fixed;
+  left: 50%;
+  top: 16px;
+  transform: translateX(-50%);
+  z-index: 5;
+  max-width: 60vw;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #3c4043;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: var(--dbb-menu-shadow);
+  pointer-events: none;
+}
+#toast[hidden] { display: none; }
