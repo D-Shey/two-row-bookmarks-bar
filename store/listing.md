@@ -118,7 +118,7 @@ Declare **no** data collection in every category, then tick all three certificat
 Published from `PRIVACY.md` as a public gist — paste this:
 
 ```
-https://gist.github.com/D-Shey/9c24bb190ccb2e293346d56b75acba29
+https://github.com/D-Shey/two-row-bookmarks-bar/blob/main/PRIVACY.md
 ```
 
 ---
