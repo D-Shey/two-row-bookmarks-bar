@@ -24,7 +24,11 @@ function apply({ theme, newTabDark }) {
   window.__dbbRefreshTheme?.();
 }
 
-const DEFAULTS = { theme: 'auto', newTabDark: true };
+// A second copy of two keys: this page is a classic script and cannot import
+// background/settings.js, which stays the single source of truth. Change a
+// default there and change it here too, or an unset key reads differently on
+// this page than everywhere else.
+const DEFAULTS = { theme: 'auto', newTabDark: false };
 
 chrome.storage.sync.get(DEFAULTS).then(apply);
 

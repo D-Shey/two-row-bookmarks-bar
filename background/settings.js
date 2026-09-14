@@ -13,7 +13,7 @@ export const DEFAULTS = Object.freeze({
   labels: 'always',        // 'always' | 'folders' | 'never'
   showOther: true,         // the right-aligned "Other bookmarks" button
   hideOnFullscreen: true,
-  newTabDark: true,        // new tab page stays dark whatever the theme says
+  newTabDark: false,       // on, the new tab page stays dark whatever the theme says
   wheelScroll: true,       // wheel over the bar scrolls hidden rows into view
   blocklist: []            // hostnames the bar never shows on
 });

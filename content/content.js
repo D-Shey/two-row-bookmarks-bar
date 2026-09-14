@@ -109,6 +109,8 @@
   let overflowNodes = [];       // bookmark nodes pushed past the last row
   const menuStack = [];         // open dropdowns / context menus, outermost first
   let hoverTimer = null;
+  let barHoverTimer = null;
+  const BAR_HOVER_DWELL = 250;  // ms on a row that is not the anchor's own
   let relayoutRaf = 0;
 
   /* ================================================================== *
@@ -138,13 +140,422 @@
     ].map((d) => d + ' !important').join(';') + ';';
   }
 
+  // How far the page has to move down to clear the bar; zero whenever the
+  // bar floats over the page instead of pushing it.
+  const pageOffset = () =>
+    settings.enabled && settings.layout === 'push' && !settings.autoHide ? barHeight() : 0;
+
   function applyPageOffset() {
     const de = document.documentElement;
-    if (!settings.enabled || settings.layout !== 'push' || settings.autoHide) {
+    const offset = pageOffset();
+    if (!offset) {
       de.style.removeProperty('padding-top');
+      unwatchFixedChrome();
+      releaseFixedChrome();
       return;
     }
-    de.style.setProperty('padding-top', barHeight() + 'px', 'important');
+    de.style.setProperty('padding-top', offset + 'px', 'important');
+    watchFixedChrome();
+    scanFixedChrome();
+  }
+
+  /* ================================================================== *
+   * Fixed page chrome
+   *
+   * padding-top on <html> moves the flow and nothing else. An element with
+   * position: fixed is laid out against the viewport, so a site header
+   * pinned at top: 0 stays exactly where it was and vanishes under the bar
+   * — on YouTube that swallows the whole search field. CSS has no selector
+   * for "everything fixed", so the offenders are found by hit-testing the
+   * top of the viewport and pushed down one at a time.
+   *
+   * The push is a margin, not a top: sites rewrite `top` themselves (the
+   * headers that slide away on scroll), and a margin composes with whatever
+   * they set instead of fighting it.
+   * ================================================================== */
+
+  const shifted = new Map();     // element → how far we pushed it, and from what
+  const known = new Set();       // every element the scan has ever claimed
+  const FIXED_INTERVAL = 250;    // ms; a busy site mutates far faster than this
+  const SHADOW_DEPTH = 12;       // nested shadow roots to descend through
+  let fixedObserver = null;
+  let holdObserver = null;
+  let fixedTimer = 0;
+  let fixedAt = 0;
+  let holdRaf = 0;
+
+  // Whether the element is laid out against the viewport rather than against
+  // the flow the padding on <html> moved.
+  //
+  // position: fixed always is. So is an absolutely positioned element with no
+  // positioned ancestor: its containing block is the initial containing block,
+  // which the padding does not touch. Whole-viewport apps are built that way —
+  // Yandex Maps hangs its entire shell off one such <div> — and their top
+  // strip, the sidebar's search field included, ends up under the bar with
+  // nothing in the flow left to push.
+  //
+  // A positioned <body> would make its own padding box the containing block
+  // for those absolute children, and that box has already moved with the
+  // padding; shifting them again would double the offset.
+  let bodyStatic = true;
+
+  // the script starts at document_start, so <body> is not a given
+  function updateBodyStatic() {
+    bodyStatic = !!document.body && getComputedStyle(document.body).position === 'static';
+  }
+
+  // A sticky box sticks to its scrollport. When an ancestor scrolls, that
+  // ancestor is the scrollport and the bar has nothing to do with it; only the
+  // ones pinned against the page itself are ours to move.
+  function stickyToViewport(el) {
+    for (let n = el.parentElement; n && n !== document.documentElement; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') return false;
+    }
+    return true;
+  }
+
+  function viewportAnchored(el, cs) {
+    if (cs.position === 'fixed') return true;
+    if (cs.position === 'sticky') return stickyToViewport(el);
+    if (cs.position !== 'absolute' || !bodyStatic) return false;
+    return el.offsetParent === document.body;
+  }
+
+  // Which property carries the shift. A sticky box is pinned by its own
+  // threshold rather than by the flow — a margin moves where it starts, not
+  // where it stops, so it would still come to rest under the bar. `top` is
+  // the only lever there. Everything else moves by a margin, which composes
+  // with whatever the site sets instead of fighting it for the same property.
+  const shiftProp = (cs) => (cs.position === 'sticky' ? 'top' : 'margin-top');
+
+  // We write `top` on sticky chrome ourselves, so our own inline value must
+  // not read as the site having placed the element by hand.
+  const ownsTop = (el) => shifted.get(el)?.prop === 'top';
+
+  function collectFixed(x, y, found, checked, root, descended, depth) {
+    let stack;
+    try { stack = root.elementsFromPoint(x, y); } catch { return; }
+    for (const el of stack) {
+      if (el === host) continue;
+      // elementsFromPoint stops at a shadow host, and plenty of site chrome
+      // lives inside one.
+      //
+      // Descending blind does not terminate: a shadow root is free to hand
+      // its own host straight back, and Ozon's <video-player> does exactly
+      // that, so the same tree gets re-entered until the stack gives out —
+      // seconds of a frozen page, every scan. `checked` is no help here, it
+      // is consulted after this point and shared across every probe. One
+      // entry per tree per probe keeps the reach and drops the loop.
+      //
+      // The depth cap is the belt to that pair of braces. Entering each tree
+      // once bounds the *repeats*, not the descent: distinct roots can nest
+      // as deep as a site cares to nest components, and the cost of guessing
+      // that limit wrong is a blown stack — the whole scan lost, on a page
+      // that is already misbehaving. Site chrome pinned to the top of the
+      // window is never buried a dozen component shells deep.
+      if (el.shadowRoot && depth < SHADOW_DEPTH && !descended.has(el.shadowRoot)) {
+        descended.add(el.shadowRoot);
+        collectFixed(x, y, found, checked, el.shadowRoot, descended, depth + 1);
+      }
+      if (checked.has(el)) continue;
+      checked.add(el);
+      const cs = getComputedStyle(el);
+      if (!viewportAnchored(el, cs)) continue;
+      // A bar anchored to the bottom must not move: a margin would drag it
+      // up, not down. getComputedStyle is no help telling the two apart — it
+      // resolves `top` to a used pixel value even when the element is
+      // anchored by `bottom` (YouTube's snackbar reads back as top: 945px).
+      // The typed map reports the computed value, where auto stays auto.
+      const anchor = el.computedStyleMap
+        ? String(el.computedStyleMap().get('top'))
+        : cs.top;
+      if (anchor === 'auto') continue;
+      // An inline top is a popup the site placed against a measured rect,
+      // and that rect already carries the offset. Pushing again doubles it.
+      if (el.style.top && !ownsTop(el)) continue;
+      if (!el.getClientRects().length) continue;
+      found.add(el);
+    }
+  }
+
+  // Reaches below the bar's own band: secondary strips (YouTube's chip row
+  // and guide) hang off the site header, not off the viewport.
+  const chromeBand = () => barHeight() + 240;
+
+  function findFixedChrome() {
+    const found = new Set();
+    const checked = new Set();
+    const vw = document.documentElement.clientWidth;
+    const band = chromeBand();
+    updateBodyStatic();
+    for (const x of [4, vw >> 2, vw >> 1, vw - (vw >> 2), vw - 5]) {
+      for (let y = 2; y < band; y += 40) {
+        collectFixed(x, y, found, checked, document, new Set(), 0);
+      }
+    }
+    return found;
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Backdrops drawn as a fixed pseudo-element
+   *
+   * A margin moves the element's own box and nothing else. A ::before that
+   * is itself position: fixed has the viewport as its containing block, so
+   * it stays exactly where it was while the element it belongs to slides
+   * down — and a site header whose whole background is painted that way
+   * ends up as loose controls floating over live page content. Ozon's
+   * pinned header does precisely this:
+   *
+   *     .uw_ia.uw_ai0::before { position: fixed; top: 0; width: 100%;
+   *                             height: 64px; background: #fff }
+   *
+   * A pseudo-element has no inline style, so the offset reaches it through
+   * a custom property it inherits from its own element, and one stylesheet
+   * turns that property into a margin.
+   * ------------------------------------------------------------------ */
+
+  const PSEUDOS = [
+    { name: '::before', attr: 'dbbShiftBefore', prop: '--dbb-shift-before' },
+    { name: '::after', attr: 'dbbShiftAfter', prop: '--dbb-shift-after' }
+  ];
+  let pseudoSheet = null;
+
+  function ensurePseudoSheet() {
+    if (pseudoSheet?.isConnected) return;
+    pseudoSheet = document.createElement('style');
+    pseudoSheet.textContent =
+      '[data-dbb-shift-before]::before{margin-top:var(--dbb-shift-before)!important}' +
+      '[data-dbb-shift-after]::after{margin-top:var(--dbb-shift-after)!important}';
+    document.documentElement.appendChild(pseudoSheet);
+  }
+
+  function clearPseudoShift(el) {
+    for (const p of PSEUDOS) {
+      el.style.removeProperty(p.prop);
+      delete el.dataset[p.attr];      // the rule stops matching, so the site's
+    }                                 // own margin is what reads back again
+  }
+
+  // Which of the element's pseudo-elements need moving, and from what margin.
+  // Called again whenever the site rewrites the margin of the element itself,
+  // so our own offset has to come off first or each pass would stack on the
+  // last one.
+  function pseudoBases(el) {
+    const bases = {};
+    const band = chromeBand();
+    clearPseudoShift(el);
+    for (const p of PSEUDOS) {
+      const cs = getComputedStyle(el, p.name);
+      if (cs.content === 'none' || cs.position !== 'fixed') continue;
+      // Same trap as the elements themselves: a bottom-anchored box reports
+      // its used top, which lands far down the viewport. computedStyleMap is
+      // not available for pseudo-elements, so the band does the telling.
+      const top = parseFloat(cs.top);
+      if (!(top < band)) continue;
+      bases[p.name] = parseFloat(cs.marginTop) || 0;
+    }
+    return bases;
+  }
+
+  function shiftPseudos(el, bases, offset) {
+    for (const p of PSEUDOS) {
+      const base = bases[p.name];
+      if (base === undefined) continue;
+      ensurePseudoSheet();
+      el.style.setProperty(p.prop, base + offset + 'px');
+      el.dataset[p.attr] = '';
+    }
+  }
+
+  function unshift(el, state) {
+    const prop = state.prop || 'margin-top';
+    if (state.inline) el.style.setProperty(prop, state.inline, state.priority);
+    else el.style.removeProperty(prop);
+    clearPseudoShift(el);
+  }
+
+  function releaseFixedChrome() {
+    for (const [el, state] of shifted) unshift(el, state);
+    shifted.clear();
+    known.clear();
+    pseudoSheet?.remove();
+    pseudoSheet = null;
+  }
+
+  function applyShift(el, state, offset) {
+    const cs = getComputedStyle(el);
+    const prop = shiftProp(cs);
+    // The site changed how it positions this one; hand back the old property
+    // before taking over the new one.
+    if (state && state.prop !== prop) {
+      unshift(el, state);
+      shifted.delete(el);
+      state = null;
+    }
+    // Ours is decided by the value we wrote, never by the computed one.
+    //
+    // Sites transition these properties — grok.com puts `transition: all` on
+    // its dialog — and a computed value read while that animation is in
+    // flight is not the value we set. Mistaken for the site's own baseline it
+    // earns another offset on top, every single scan, each pass raising the
+    // target the animation is chasing. The subscription cards had marched
+    // 1300px down the page before it was caught, and the write-read-write
+    // feedback took the main thread with them. An inline declaration is a
+    // string we put there; no animation touches it.
+    const written = el.style.getPropertyValue(prop);
+    const mine = !!state && written === state.applied;
+    if (mine && parseFloat(state.applied) === state.base + offset) return;
+
+    let base, inline, priority;
+    if (mine) {
+      ({ base, inline, priority } = state);
+    } else {
+      // Our own leftover would read back as the site's baseline. Only ever
+      // clear a value we can prove we wrote: without state, an inline value
+      // belongs to the site and is its to keep.
+      if (state && written) el.style.removeProperty(prop);
+      inline = el.style.getPropertyValue(prop);
+      priority = el.style.getPropertyPriority(prop);
+      base = parseFloat(getComputedStyle(el).getPropertyValue(prop)) || 0;
+    }
+
+    const applied = base + offset + 'px';
+    const pseudos = mine ? state.pseudos : pseudoBases(el);
+    el.style.setProperty(prop, applied, 'important');
+    shiftPseudos(el, pseudos, offset);
+    shifted.set(el, { prop, base, applied, inline, priority, pseudos });
+  }
+
+  // The same questions the scan asks, minus the hit-testing: does this element
+  // still hang off the viewport, and is it still ours to move?
+  function stillAnchored(el) {
+    const cs = getComputedStyle(el);
+    if (!viewportAnchored(el, cs)) return false;
+    const anchor = el.computedStyleMap
+      ? String(el.computedStyleMap().get('top'))
+      : cs.top;
+    return anchor !== 'auto' && (!el.style.top || ownsTop(el));
+  }
+
+  /**
+   * Keeping known chrome in place, on the spot.
+   *
+   * The grid scan is for *finding* chrome, and it is throttled because it is
+   * expensive. Holding what it found cannot wait: sites flip a header between
+   * pinned and in-flow as you scroll, and Ozon does it on every direction
+   * change. A correction that lands a frame late is plainly visible — the
+   * header sits in the flow still carrying our margin (the page under it
+   * jumps down by the bar height), or it pins back under the bar and pops out
+   * a fifth of a second later.
+   *
+   * So this pass runs straight from the observer, before the frame is
+   * painted. It only revisits elements the scan already claimed, costs a
+   * couple of style reads each and no layout, and writes nothing when
+   * everything is already where it belongs — which is what keeps our own
+   * writes from feeding back into a loop.
+   */
+  function refreshShifted() {
+    if (!host || !settings || !known.size) return;
+    const offset = pageOffset();
+    updateBodyStatic();
+    for (const el of known) {
+      if (!el.isConnected) {
+        known.delete(el);
+        shifted.delete(el);
+        continue;
+      }
+      const state = shifted.get(el);
+      if (offset && stillAnchored(el)) applyShift(el, state, offset);
+      else if (state) { unshift(el, state); shifted.delete(el); }
+    }
+  }
+
+  // Watching the handful of elements we actually hold, and nothing else.
+  //
+  // Pinning is a class flip on the element itself, so this fires a few times
+  // per scroll rather than on every mutation the page makes — cheap enough to
+  // answer synchronously. That matters: the site flips the class inside its
+  // own frame, and a requestAnimationFrame booked from there does not run
+  // until the next one, which is exactly one painted frame of the header
+  // sitting in the wrong place. An observer callback is a microtask, so the
+  // correction lands in the same frame however late in it the site moved.
+  function observeKnown() {
+    if (!holdObserver) return;
+    holdObserver.disconnect();
+    for (const el of known) {
+      holdObserver.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+    }
+  }
+
+  // A frame-coalesced net for changes that never touch the element's own
+  // attributes — a stylesheet swap, a class flipped on some ancestor.
+  function scheduleHold() {
+    if (holdRaf) return;
+    holdRaf = requestAnimationFrame(() => {
+      holdRaf = 0;
+      refreshShifted();
+    });
+  }
+
+  function scanFixedChrome() {
+    if (!host || !settings) { releaseFixedChrome(); return; }
+    const offset = pageOffset();
+    if (!offset) { releaseFixedChrome(); return; }
+
+    const found = findFixedChrome();
+    if (host) host.dataset.dbbFound = String(found.size);   // TEMP: scan result
+
+    for (const [el, state] of shifted) {
+      if (found.has(el) && el.isConnected) continue;
+      unshift(el, state);
+      shifted.delete(el);
+    }
+
+    for (const el of found) {
+      known.add(el);
+      applyShift(el, shifted.get(el), offset);
+    }
+
+    observeKnown();
+  }
+
+  function scheduleFixedScan() {
+    if (fixedTimer) return;
+    fixedTimer = setTimeout(() => {
+      fixedTimer = 0;
+      fixedAt = performance.now();
+      scanFixedChrome();
+    }, Math.max(0, FIXED_INTERVAL - (performance.now() - fixedAt)));
+  }
+
+  function watchFixedChrome() {
+    if (fixedObserver) return;
+    // Our own margin write lands here too. The scan is idempotent, so the
+    // echo costs one extra pass and then goes quiet.
+    holdObserver = new MutationObserver(refreshShifted);
+    observeKnown();
+    fixedObserver = new MutationObserver(() => {
+      scheduleHold();
+      scheduleFixedScan();
+    });
+    fixedObserver.observe(document.documentElement, {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ['style', 'class', 'hidden']
+    });
+  }
+
+  function unwatchFixedChrome() {
+    fixedObserver?.disconnect();
+    fixedObserver = null;
+    holdObserver?.disconnect();
+    holdObserver = null;
+    clearTimeout(fixedTimer);
+    fixedTimer = 0;
+    cancelAnimationFrame(holdRaf);
+    holdRaf = 0;
   }
 
   /* ================================================================== *
@@ -153,6 +564,7 @@
 
   async function buildHost() {
     host = document.createElement('dbb-bookmarks-bar');
+    host.dataset.dbbProbe = 'fixed-chrome';   // TEMP: version marker
     host.style.cssText = hostCss();
     root = host.attachShadow({ mode: 'closed' });
 
@@ -461,15 +873,38 @@
     });
 
     // Hovering a sibling while a dropdown is open switches to it, as in Chrome.
+    //
+    // Chrome can act on the first hover because its bar is a single row: the
+    // pointer only ever reaches another button on purpose. Here the menu
+    // hangs below every row, so the trip from a first-row folder down to its
+    // own menu crosses the rows in between — and treating that as a hover
+    // shuts the menu before the pointer arrives. A move along the anchor's
+    // own row is the deliberate gesture and still acts at once; anything on
+    // another row has to be dwelt on to count as one.
+    const sameRow = (a, b) =>
+      Math.abs(a.getBoundingClientRect().top - b.getBoundingClientRect().top) < 2;
+
     barEl.addEventListener('mouseover', (ev) => {
+      clearTimeout(barHoverTimer);
       if (!menuStack.length || menuStack[0].kind !== 'folder') return;
       const item = ev.target.closest?.('.item');
-      if (!item || item === menuStack[0].anchor) return;
-      if (item === chevronEl) { openOverflowMenu(); return; }
-      const node = nodeById(item.dataset.id);
-      if (node && isFolder(node)) openMenuForItem(item);
-      else closeAllMenus();
+      const anchor = menuStack[0].anchor;
+      if (!item || item === anchor) return;
+
+      const act = () => {
+        if (item === chevronEl) { openOverflowMenu(); return; }
+        const node = nodeById(item.dataset.id);
+        if (node && isFolder(node)) openMenuForItem(item);
+        else closeAllMenus();
+      };
+
+      if (anchor && sameRow(item, anchor)) act();
+      else barHoverTimer = setTimeout(act, BAR_HOVER_DWELL);
     });
+
+    // Leaving the bar — for the menu, most of the time — cancels a pending
+    // switch; no mouseover follows out there to clear it.
+    barEl.addEventListener('mouseleave', () => clearTimeout(barHoverTimer));
 
     // Wheel over the bar walks through the rows one at a time. The event is only
     // swallowed when the bar actually moves, so pages still scroll normally once
@@ -603,15 +1038,23 @@
       top = Math.min(Math.max(gap, a.top - 6), vh - rect.height - gap);
     } else if (anchor) {
       const a = anchor.getBoundingClientRect();
-      const below = vh - a.bottom - 2 * gap;
-      const above = a.top - 2 * gap;
+      // A bar dropdown hangs under the whole bar, never under the button
+      // alone. Two pixels below a first-row button puts the menu on top of
+      // the rows beneath it, and then the trip from button to menu runs
+      // across the bar's other entries — where brushing a bookmark dismisses
+      // the menu and brushing a folder swaps it. Chrome gets to anchor to the
+      // button because its bar is one row and nothing of it lies below.
+      // Vertically the bar is the anchor; horizontally the button still is.
+      const bar = barEl.getBoundingClientRect();
+      const below = vh - bar.bottom - 2 * gap;
+      const above = bar.top - 2 * gap;
       if (rect.height <= below || below >= above) {
         menu.style.maxHeight = Math.max(96, below) + 'px';
-        top = a.bottom + 2;
+        top = bar.bottom + 2;
       } else {
         menu.style.maxHeight = Math.max(96, above) + 'px';
         rect = measure();
-        top = Math.max(gap, a.top - rect.height - 2);
+        top = Math.max(gap, bar.top - rect.height - 2);
       }
       rect = measure();
       left = a.left;
@@ -1166,6 +1609,8 @@
 
   function teardown() {
     closeAllMenus();
+    unwatchFixedChrome();
+    releaseFixedChrome();
     host?.remove();
     host = null;
     document.documentElement.style.removeProperty('padding-top');
@@ -1269,7 +1714,12 @@
     else if (msg?.type === 'settingsChanged') applySettings(msg.settings);
   });
 
-  window.addEventListener('resize', scheduleRelayout, { passive: true });
+  window.addEventListener('resize', () => {
+    scheduleRelayout();
+    scheduleFixedScan();
+  }, { passive: true });
+  // Plenty of headers only turn fixed once the page has scrolled.
+  window.addEventListener('scroll', scheduleFixedScan, { passive: true, capture: true });
   document.addEventListener('fullscreenchange', () => settings && applySettings(settings));
   window.addEventListener('keydown', (ev) => {
     if (!menuStack.length) return;

@@ -1,9 +1,9 @@
 /* The new tab page is nothing but a backdrop for the bookmarks bar.
 
-   By default the backdrop is dark whatever theme is in use — that is the
-   "тёмная страница новой вкладки" setting. Turn it off and the page follows the
-   theme like everything else. (For reference: Chrome paints its own dark new tab
-   at #3c3c3c; this sits a couple of steps darker, matching the bar.) */
+   By default it follows the theme like every other page. Turning on "тёмная
+   страница новой вкладки" pins it dark whatever theme is in use. (For
+   reference: Chrome paints its own dark new tab at #3c3c3c; this sits a couple
+   of steps darker, matching the bar.) */
 
 :root {
   color-scheme: light dark;

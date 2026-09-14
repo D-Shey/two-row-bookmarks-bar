@@ -46,7 +46,7 @@ WHAT YOU GET
 
 THE NEW TAB PAGE
 
-Extensions are not allowed to run on chrome://newtab, so the only way to show the bar there is to replace that page. This extension does, with a deliberately empty page: a dark backdrop and the bookmarks bar, nothing else. No search box, no sponsored tiles, and your default search engine is never touched. If you would rather keep Chrome's own new tab, the page can be left dark or theme-following in the settings — and disabling the extension restores it entirely.
+Extensions are not allowed to run on chrome://newtab, so the only way to show the bar there is to replace that page. This extension does, with a deliberately empty page: a plain backdrop and the bookmarks bar, nothing else. No search box, no sponsored tiles, and your default search engine is never touched. The page follows your theme by default, and a setting pins it dark if you prefer — and disabling the extension restores Chrome's own new tab entirely.
 
 BEFORE YOU START
 
