@@ -134,24 +134,153 @@
       'z-index: 2147483646',
       'pointer-events: auto',
       'color-scheme: light dark',
+      // The bar lives inside <html>, so a page we shrank would shrink it too.
+      'zoom: ' + (shrinking() ? 1 / shrinkFactor() : 1),
       '--dbb-row-h: ' + settings.rowHeight + 'px',
       '--dbb-font: ' + settings.fontSize + 'px',
       '--dbb-item-max: ' + settings.maxItemWidth + 'px'
     ].map((d) => d + ' !important').join(';') + ';';
   }
 
-  // How far the page has to move down to clear the bar; zero whenever the
-  // bar floats over the page instead of pushing it.
-  const pageOffset = () =>
-    settings.enabled && settings.layout === 'push' && !settings.autoHide ? barHeight() : 0;
+  /* ------------------------------------------------------------------ *
+   * Pages that cannot give the bar any room
+   *
+   * `padding-top` on <html> assumes the page is laid out against the
+   * document. An app that measures the window instead and places its chrome
+   * from `window.innerHeight` is simply moved down as a whole, and its bottom
+   * strip leaves the screen with nothing to scroll to — in Google Sheets that
+   * strip is the sheet tabs and the "add sheet" button. Shrinking the page
+   * does not help: forced to `calc(100vh - 61px)` its body dutifully became
+   * 884px tall while the sheet tabs stayed exactly where they were.
+   *
+   * The tell is measurable, so no site ever has to be named: the page cannot
+   * be scrolled, and along the bottom edge of the window sits content that
+   * carries on past it. Yandex Maps — the other whole-window app — reads
+   * differently, and that is the point: its shell is anchored top and bottom,
+   * so the shift makes it shrink and its bottom lands exactly on the window's.
+   *
+   * Where the room cannot be had, the page is drawn smaller instead. The app
+   * still believes it has the whole window and still lays out that many
+   * pixels; `zoom` on <html> is what renders those pixels into the strip left
+   * below the bar. Nothing is hidden and nothing is covered — the price is
+   * that such a page is rendered a few per cent smaller, and only such a page.
+   *
+   * On a window too short for that to be a fair trade the bar gives up its
+   * place instead and hides, the way the autoHide setting does.
+   * ------------------------------------------------------------------ */
+
+  const MIN_ZOOM = 0.8;          // below this the page is squashed, not shrunk
+
+  let spaceDenied = false;
+
+  // How much the page has to be scaled for a full window's worth of layout to
+  // land in what is left below the bar. clientHeight is read off <html>, which
+  // keeps reporting the window even once the zoom is on it.
+  function shrinkFactor() {
+    const winH = document.documentElement.clientHeight;
+    if (!winH || !settings) return 1;
+    return (winH - barHeight()) / winH;
+  }
+
+  const shrinking = () => spaceDenied && shrinkFactor() >= MIN_ZOOM;
+
+  // The bar takes no room of its own — by the user's choice, or because the
+  // page cannot spare any and is too short to be shrunk for it either.
+  const barFloats = () => !!settings.autoHide || (spaceDenied && !shrinking());
+
+  function applyShrink() {
+    if (!host || !settings) return;
+    const de = document.documentElement;
+    if (shrinking()) de.style.setProperty('zoom', String(shrinkFactor()));
+    else de.style.removeProperty('zoom');
+    host.style.cssText = hostCss();      // carries the counter-zoom
+  }
+
+  // How far the page has to move down to clear the bar; zero whenever the bar
+  // floats over the page instead of pushing it.
+  //
+  // Expressed in the page's own pixels, which stop being ours once the page is
+  // shrunk: a 61px offset written into a page zoomed to 0.935 lands as 57 real
+  // pixels and tucks the top of it under the bar. Everything downstream — the
+  // padding and every chrome element the scan shifts — lives inside that same
+  // zoom, so dividing here covers all of it.
+  const pageOffset = () => {
+    if (!settings.enabled || settings.layout !== 'push' || barFloats()) return 0;
+    return barHeight() / (shrinking() ? shrinkFactor() : 1);
+  };
+
+  const scrollLocked = () => {
+    const hidden = (cs) => cs.overflowY === 'hidden' || cs.overflowY === 'clip';
+    return hidden(getComputedStyle(document.documentElement)) ||
+      (!!document.body && hidden(getComputedStyle(document.body)));
+  };
+
+  // Does the page's own layout come out exactly the size of the window?
+  //
+  // This is what separates an app built to fill the window from an ordinary
+  // long page that happens to be scroll-locked at this moment — a modal is
+  // open, say. Both refuse to scroll; only the app has nothing below the fold
+  // to begin with. Our own padding is discounted, since it is the thing under
+  // suspicion.
+  function docFitsWindow(offset) {
+    const de = document.documentElement;
+    return de.scrollHeight - offset <= de.clientHeight + 2;
+  }
+
+  // Is the window's bottom edge lined with content that runs past it? One
+  // probe is allowed to disagree: a panel that scrolls on its own overhangs
+  // by design, and its content is reachable.
+  function bottomCutOff() {
+    const de = document.documentElement;
+    const vh = de.clientHeight;
+    const vw = de.clientWidth;
+    let seen = 0;
+    let cut = 0;
+    for (const x of [4, vw >> 2, vw >> 1, vw - (vw >> 2), vw - 5]) {
+      let stack;
+      try { stack = document.elementsFromPoint(x, vh - 2); } catch { continue; }
+      for (const el of stack) {
+        if (el === host || el === de || el === document.body) continue;
+        const r = el.getBoundingClientRect();
+        if (!r.height) continue;
+        seen++;
+        if (r.bottom > vh + 2) cut++;
+        break;
+      }
+    }
+    return seen >= 3 && cut >= seen - 1;
+  }
+
+  // Latched on purpose: with the padding gone the page measures fine again,
+  // and re-testing would only flip the bar back and forth. The way out is the
+  // lock lifting — a modal closing, say — not the symptom disappearing.
+  function reviewSpace() {
+    if (!host || !settings) return;
+    if (spaceDenied) {
+      if (scrollLocked()) return;
+      spaceDenied = false;
+      applyPageOffset();
+      applyTheme();
+      return;
+    }
+    const offset = pageOffset();
+    if (!offset || !scrollLocked() || !docFitsWindow(offset) || !bottomCutOff()) return;
+    spaceDenied = true;
+    applyPageOffset();
+    applyTheme();
+  }
 
   function applyPageOffset() {
     const de = document.documentElement;
     const offset = pageOffset();
+    applyShrink();
     if (!offset) {
       de.style.removeProperty('padding-top');
-      unwatchFixedChrome();
       releaseFixedChrome();
+      // A page that denied the room stays watched: the lock it set can lift
+      // again — a modal closing — and nothing else would ever notice.
+      if (spaceDenied) watchFixedChrome();
+      else unwatchFixedChrome();
       return;
     }
     de.style.setProperty('padding-top', offset + 'px', 'important');
@@ -500,6 +629,7 @@
 
   function scanFixedChrome() {
     if (!host || !settings) { releaseFixedChrome(); return; }
+    reviewSpace();
     const offset = pageOffset();
     if (!offset) { releaseFixedChrome(); return; }
 
@@ -623,7 +753,7 @@
     const theme = window.__dbbThemeOverride || settings.theme;
     if (theme === 'auto') host.removeAttribute('data-theme');
     else host.setAttribute('data-theme', theme);
-    host.classList.toggle('autohide', !!settings.autoHide);
+    host.classList.toggle('autohide', barFloats());
   }
 
   /* ================================================================== *
@@ -941,12 +1071,12 @@
       indexOf: (item) => barItems.indexOf(item)
     });
 
-    if (settings.autoHide) {
-      host.addEventListener('mouseenter', () => host.classList.add('revealed'));
-      host.addEventListener('mouseleave', () => {
-        if (!menuStack.length) host.classList.remove('revealed');
-      });
-    }
+    // Wired whichever mode we are in: a page can deny the bar its room at any
+    // moment, and then these are the only way back to it.
+    host.addEventListener('mouseenter', () => host.classList.add('revealed'));
+    host.addEventListener('mouseleave', () => {
+      if (!menuStack.length) host.classList.remove('revealed');
+    });
 
     overlayEl.addEventListener('mousedown', (ev) => {
       ev.preventDefault();
@@ -973,7 +1103,7 @@
     if (!menuStack.length) {
       overlayEl.hidden = true;
       host.classList.remove('menu-open');
-      if (settings.autoHide && !host.matches(':hover')) host.classList.remove('revealed');
+      if (barFloats() && !host.matches(':hover')) host.classList.remove('revealed');
     }
   }
 
@@ -1614,6 +1744,7 @@
     host?.remove();
     host = null;
     document.documentElement.style.removeProperty('padding-top');
+    document.documentElement.style.removeProperty('zoom');
   }
 
   async function mount() {
@@ -1715,6 +1846,7 @@
   });
 
   window.addEventListener('resize', () => {
+    if (settings) applyShrink();       // the factor is a share of the window
     scheduleRelayout();
     scheduleFixedScan();
   }, { passive: true });
